@@ -12,7 +12,7 @@ export const auth = {
   clear:    ()          => localStorage.removeItem(TOKEN_KEY),
   isLogged: ()          => !!localStorage.getItem(TOKEN_KEY),
 };
-
+ 
 // ─── Base fetch ───────────────────────────────────────────────────────────────
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const token = auth.getToken();
@@ -21,21 +21,21 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     ...(init?.headers as Record<string, string> ?? {}),
   };
   if (token) headers["Authorization"] = `Bearer ${token}`;
-
+ 
   const res  = await fetch(`${BASE}${path}`, { ...init, headers });
   const json = await res.json();
-
+ 
   if (res.status === 401) {
     auth.clear();
     throw new AuthError(json.error ?? "Sessão expirada.");
   }
-
+ 
   if (!res.ok || !json.success) throw new Error(json.error ?? "Erro desconhecido");
   return json.data as T;
 }
-
+ 
 export class AuthError extends Error {}
-
+ 
 // ─── Types ────────────────────────────────────────────────────────────────────
 export interface AdminUser {
   id: number;
@@ -43,14 +43,14 @@ export interface AdminUser {
   email: string;
   lastLoginAt?: string;
 }
-
+ 
 export interface Category {
   id: number;
   name: string;
   badgeClass: string;
   _count?: { articles: number };
 }
-
+ 
 export interface Article {
   id: number;
   title: string;
@@ -63,12 +63,13 @@ export interface Article {
   tags: string[];
   body: string[];
   published: boolean;
+  featured: boolean;
   createdAt: string;
   updatedAt: string;
   category: Category;
   catClass?: string; // derived
 }
-
+ 
 export interface ArticleInput {
   title: string;
   meta: string;
@@ -79,14 +80,15 @@ export interface ArticleInput {
   tags?: string[];
   body: string[];
   published?: boolean;
+  featured?: boolean;
   categoryId: number;
 }
-
+ 
 export interface PaginatedArticles {
   articles: Article[];
   pagination: { total: number; page: number; limit: number; pages: number };
 }
-
+ 
 // ─── Auth API ─────────────────────────────────────────────────────────────────
 export const authApi = {
   async login(email: string, password: string) {
@@ -97,15 +99,15 @@ export const authApi = {
     auth.setToken(data.token);
     return data;
   },
-
+ 
   logout() {
     auth.clear();
   },
-
+ 
   me() {
     return request<AdminUser>("/auth/me");
   },
-
+ 
   changePassword(currentPassword: string, newPassword: string) {
     return request<{ message: string }>("/auth/change-password", {
       method: "POST",
@@ -113,41 +115,42 @@ export const authApi = {
     });
   },
 };
-
+ 
 // ─── Articles API ─────────────────────────────────────────────────────────────
 export const articlesApi = {
-  list(params?: { category?: string; published?: boolean; search?: string; page?: number; limit?: number }) {
+  list(params?: { category?: string; published?: boolean; featured?: boolean; search?: string; page?: number; limit?: number }) {
     const q = new URLSearchParams();
     if (params?.category)                q.set("category", params.category);
     if (params?.published !== undefined) q.set("published", String(params.published));
+    if (params?.featured  !== undefined) q.set("featured",  String(params.featured));
     if (params?.search)                  q.set("search", params.search);
     if (params?.page)                    q.set("page", String(params.page));
     if (params?.limit)                   q.set("limit", String(params.limit));
     const qs = q.toString();
     return request<PaginatedArticles>(`/articles${qs ? `?${qs}` : ""}`);
   },
-
+ 
   get(idOrSlug: string | number) {
     return request<Article>(`/articles/${idOrSlug}`);
   },
-
+ 
   create(data: ArticleInput) {
     return request<Article>("/articles", { method: "POST", body: JSON.stringify(data) });
   },
-
+ 
   update(id: number, data: ArticleInput) {
     return request<Article>(`/articles/${id}`, { method: "PUT", body: JSON.stringify(data) });
   },
-
+ 
   patch(id: number, data: Partial<ArticleInput>) {
     return request<Article>(`/articles/${id}`, { method: "PATCH", body: JSON.stringify(data) });
   },
-
+ 
   delete(id: number) {
     return request<{ deleted: boolean }>(`/articles/${id}`, { method: "DELETE" });
   },
 };
-
+ 
 // ─── Categories API ───────────────────────────────────────────────────────────
 export const categoriesApi = {
   list() { return request<Category[]>("/categories"); },
@@ -158,12 +161,12 @@ export const categoriesApi = {
     return request<{ deleted: boolean }>(`/categories/${id}`, { method: "DELETE" });
   },
 };
-
+ 
 // ─── Seed ─────────────────────────────────────────────────────────────────────
 export function seedDatabase() {
   return request<{ message: string }>("/seed", { method: "POST" });
 }
-
+ 
 // ─── Helper ───────────────────────────────────────────────────────────────────
 export function normalizeArticle(a: Article): Article {
   return { ...a, catClass: a.category.badgeClass };

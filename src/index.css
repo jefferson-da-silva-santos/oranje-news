@@ -1706,55 +1706,21 @@ ul, ol  { list-style: none; }
   font-weight: 600 !important;
   min-width: 240px !important;
   max-width: 340px !important;
-  padding: 0.75rem 1rem !important;
-  display: flex !important;
-  align-items: center !important;
+  padding: 0.75rem 1.1rem !important;
 }
 
 .notyf__toast--success { background: #FF6200 !important; }
 .notyf__toast--error   { background: #dc2626 !important; }
-
-.notyf__wrapper {
-  display: flex !important;
-  align-items: center !important;
-  padding: 0 !important;
-  gap: 0 !important;
-  width: 100% !important;
-}
-
-.notyf__icon { display: none !important; }
+.notyf__icon    { display: none !important; }
+.notyf__ripple  { display: none !important; }
+.notyf__dismiss { display: none !important; }
 
 .notyf__message {
   color: #fff !important;
   font-weight: 600 !important;
+  line-height: 1.45 !important;
   padding: 0 !important;
   margin: 0 !important;
-  flex: 1 !important;
-  line-height: 1.4 !important;
-}
-
-.notyf__ripple { display: none !important; }
-
-.notyf__dismiss {
-  background: rgba(0,0,0,0.15) !important;
-  border-radius: 4px !important;
-  width: 20px !important;
-  height: 20px !important;
-  min-width: 20px !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  margin-left: 0.75rem !important;
-  flex-shrink: 0 !important;
-}
-.notyf__dismiss-btn {
-  width: 10px !important;
-  height: 10px !important;
-}
-.notyf__dismiss-btn::after,
-.notyf__dismiss-btn::before {
-  background: rgba(255,255,255,0.9) !important;
-  width: 10px !important;
 }
 
 
@@ -1858,4 +1824,17 @@ ul, ol  { list-style: none; }
   font-size: 0.75rem;
   color: var(--txt3);
   font-weight: 500;
+}
+
+/* ── Featured star button ─────────────────────────────────────────────────── */
+.adm-action-btn.star       { color: var(--txt3); }
+.adm-action-btn.star:hover { background: rgba(217,119,6,0.08); border-color: var(--amber); color: var(--amber); }
+.adm-action-btn.star-active { color: var(--amber) !important; border-color: var(--amber) !important; background: rgba(217,119,6,0.08) !important; }
+
+.adm-toggle-star + .adm-toggle-track { }
+.adm-field-hint {
+  font-size: 0.72rem;
+  color: var(--txt3);
+  margin-top: 0.25rem;
+  line-height: 1.4;
 }

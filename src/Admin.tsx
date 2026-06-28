@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNotyf } from "./useNotyf";
 import {
-  authApi, articlesApi, categoriesApi, normalizeArticle, auth,
+  authApi, articlesApi, categoriesApi, normalizeArticle, auth, AuthError,
   type Article, type Category, type ArticleInput, type AdminUser,
 } from "./api";
 
@@ -207,9 +207,9 @@ function ArticleForm({ initial, categories, onSave, onCancel, saving }: {
       ? { title:initial.title, meta:initial.meta, date:initial.date, image:initial.image,
           icon:initial.icon, club:initial.club??"", tags:initial.tags,
           body:initial.body.length?initial.body:[""],
-          published:initial.published, categoryId:initial.category.id }
+          published:initial.published, featured:initial.featured??false, categoryId:initial.category.id }
       : { title:"",meta:"",date:"",image:"",icon:"bx bxs-trophy",club:"",tags:[],body:[""],
-          published:true, categoryId:categories[0]?.id??0 }
+          published:true, featured:false, categoryId:categories[0]?.id??0 }
   );
   const [tagInput, setTagInput] = useState(initial?.tags.join(", ")??"");
   const [errors,   setErrors]   = useState<Record<string,string>>({});
@@ -331,6 +331,16 @@ function ArticleForm({ initial, categories, onSave, onCancel, saving }: {
               <span className="adm-toggle-label">{form.published?"Publicado":"Rascunho"}</span>
             </label>
           </div>
+
+          <div className="adm-field">
+            <label>Destaque na página inicial</label>
+            <label className="adm-toggle">
+              <input type="checkbox" checked={(form as any).featured??false} onChange={e=>set("featured" as any, e.target.checked)}/>
+              <span className="adm-toggle-track adm-toggle-star"/>
+              <span className="adm-toggle-label">{(form as any).featured?"⭐ Em destaque":"Sem destaque"}</span>
+            </label>
+            <span className="adm-field-hint">Os 3 primeiros artigos em destaque aparecem na seção principal do site.</span>
+          </div>
         </div>
 
         <div className="adm-form-col">
@@ -376,8 +386,8 @@ function ArticleForm({ initial, categories, onSave, onCancel, saving }: {
 }
 
 // ─── Article Row ──────────────────────────────────────────────────────────────
-function ArticleRow({ article, onEdit, onDelete, onToggle }: {
-  article: Article; onEdit:()=>void; onDelete:()=>void; onToggle:()=>void;
+function ArticleRow({ article, onEdit, onDelete, onToggle, onFeature }: {
+  article: Article; onEdit:()=>void; onDelete:()=>void; onToggle:()=>void; onFeature:()=>void;
 }) {
   return (
     <div className={`adm-article-row ${!article.published?"adm-row-draft":""}`}>
@@ -396,6 +406,10 @@ function ArticleRow({ article, onEdit, onDelete, onToggle }: {
         <p className="adm-row-preview">{article.body[0]?.slice(0,120)}…</p>
       </div>
       <div className="adm-row-actions">
+        <button className={`adm-action-btn star ${article.featured?"star-active":""}`}
+          onClick={onFeature} title={article.featured?"Remover destaque":"Colocar em destaque"}>
+          <i className={`bx ${article.featured?"bxs-star":"bx-star"}`}/>
+        </button>
         <button className="adm-action-btn toggle" onClick={onToggle} title={article.published?"Despublicar":"Publicar"}>
           <i className={`bx ${article.published?"bx-hide":"bx-show"}`}/>
         </button>
@@ -483,6 +497,14 @@ function AdminPanel({ user, onLogout, onExit }: {
       setArticles(p=>p.map(a=>a.id===article.id?normalizeArticle(updated):a));
       showToast(updated.published?"Artigo publicado.":"Artigo despublicado.");
     } catch(err:any) { showToast(err.message,"error"); }
+  }
+
+  async function handleFeature(article: Article) {
+    try {
+      const updated = await articlesApi.patch(article.id, { featured: !article.featured });
+      setArticles(p => p.map(a => a.id === article.id ? normalizeArticle(updated) : a));
+      showToast(updated.featured ? "⭐ Adicionado aos destaques!" : "Removido dos destaques.");
+    } catch(err:any) { showToast(err.message, "error"); }
   }
 
   function handleDelete(id: number) {
@@ -573,7 +595,7 @@ function AdminPanel({ user, onLogout, onExit }: {
                     <button onClick={()=>{setShowCPModal(true);setUserMenuOpen(false);}}>
                       <i className="bx bx-lock-alt"/> Alterar senha
                     </button>
-                    <button onClick={()=>{setUserMenuOpen(false); onLogout()}} className="danger">
+                    <button onClick={()=> {setUserMenuOpen(false); onLogout()}} className="danger">
                       <i className="bx bx-log-out"/> Sair
                     </button>
                   </div>
@@ -739,6 +761,7 @@ function AdminPanel({ user, onLogout, onExit }: {
                       onEdit={()=>{setEditing(a);setView("edit");}}
                       onDelete={()=>handleDelete(a.id)}
                       onToggle={()=>handleToggle(a)}
+                      onFeature={()=>handleFeature(a)}
                     />
                   ))}
                 </div>
