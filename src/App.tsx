@@ -50,7 +50,7 @@ const ARTICLES: Article[] = [
       "O Ajax anunciou oficialmente a contratação do treinador espanhol Míchel Sánchez para comandar a equipe na temporada 2026-27. O técnico, de 50 anos, assinou contrato por duas temporadas, com vínculo válido até 2028, e chega para suceder ao interino Óscar García, que assumiu o cargo após a saída de Francesco Farioli.",
       "A chegada de Míchel foi fortemente influenciada pela presença de Jordi Cruyff como diretor esportivo do clube. O filho do lendário Johan Cruyff apostou no estilo de jogo muito específico do espanhol — um futebol de posse e organização posicional que se tornou marca registrada em sua passagem pelo Girona, clube que levou às competições europeias antes de sofrer o rebaixamento na Primeira Divisão espanhola.",
       "Ex-médio do Rayo Vallecano ao longo de toda a carreira como jogador, Míchel estreou no banco no clube da sua vida antes de se transferir para o Huesca. Suas cinco temporadas no Girona são consideradas seu maior legado: transformou o clube catalão em uma equipe reconhecida por toda a Europa pelo futebol atraente e pelos resultados consistentes.",
-      "A chegada do espanhol responde a uma necessidade urgente do Ajax, que viveu uma temporada para esquecer. Após terminar apenas na 5ª posição da Eredivisie, o clube de Amsterdã chegou a sondar Erik ten Hag — que comandou os Lanceiros entre 2017 e 2022 e chegou a uma semifinal de Champions League — mas o treinador optou pelo Bayer Leverkusen. Outra opção estudada no passado recente foi John Heitinga, que dirigiu o Ajax de forma interina em 2022-23.",
+      "A chegada do espanhol responde a uma necessidade urgente do Ajax, que viveu uma temporada para esquecer. Após terminar apenas na 5ª posição da Eredivisie, o clube de Amsterdã chegou a sondar Erik ten Hag — que comandou os Lanceiros entre 2017 e 2022 e chegou a uma semifinal de Champions League — mas o treinador optou pelo Bayer Leverkusen.",
       "Agora, com Míchel no comando e a diretoria reforçando o plantel para a próxima temporada, o Ajax pretende voltar a rivalizar com PSV e Feyenoord na briga pelo título da Eredivisie e recuperar seu prestígio nas competições europeias.",
     ],
   },
@@ -173,7 +173,6 @@ const FIXTURES = [
   { date:"14", month:"out 2026", comp:"Nations League", home:"Holanda", away:"Portugal", time:"20h45" },
 ];
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
 const HIGHLIGHTS = ARTICLES.slice(0, 3);
 const MORE_NEWS  = ARTICLES.slice(3, 6);
 
@@ -245,7 +244,6 @@ function ArticlePage({ article, onBack }: { article: Article; onBack: () => void
   return (
     <div className="article-layout">
       <main className="main">
-        {/* Breadcrumb */}
         <nav className="breadcrumb">
           <button className="bread-link" onClick={onBack}>
             <i className="bx bx-home-alt" /> Início
@@ -254,17 +252,17 @@ function ArticlePage({ article, onBack }: { article: Article; onBack: () => void
           <span className="bread-current">{article.category}</span>
         </nav>
 
-        {/* Hero image */}
         <div className="art-hero-img">
           <img src={article.image} alt={article.title} />
           <div className="art-hero-gradient" />
         </div>
 
-        {/* Article content */}
         <article className="art-card">
           <header className="art-header">
-            <span className={`badge ${article.catClass}`}>{article.category}</span>
-            {article.club && <span className="badge badge-grey">{article.club}</span>}
+            <div className="art-badges">
+              <span className={`badge ${article.catClass}`}>{article.category}</span>
+              {article.club && <span className="badge badge-grey">{article.club}</span>}
+            </div>
             <h1 className="art-title">{article.title}</h1>
             <div className="art-meta-row">
               <span className="art-meta-item"><i className="bx bx-calendar" /> {article.date}</span>
@@ -290,7 +288,6 @@ function ArticlePage({ article, onBack }: { article: Article; onBack: () => void
           </footer>
         </article>
 
-        {/* Related */}
         {related.length > 0 && (
           <section className="related-section">
             <div className="sec-head">
@@ -298,7 +295,7 @@ function ArticlePage({ article, onBack }: { article: Article; onBack: () => void
             </div>
             <div className={`news-grid cols-${related.length}`}>
               {related.map(n => (
-                <ArticleCard key={n.id} article={n} onClick={() => { }} />
+                <ArticleCard key={n.id} article={n} onClick={() => {}} />
               ))}
             </div>
           </section>
@@ -540,11 +537,11 @@ function SelecaoPage({ onOpen }: { onOpen: (a: Article) => void }) {
 type Page = "home" | "eredivisie" | "selecao";
 
 export default function App() {
-  const [page, setPage]           = useState<Page>("home");
-  const [article, setArticle]     = useState<Article | null>(null);
-  const [menuOpen, setMenuOpen]   = useState(false);
-  const [ereOpen, setEreOpen]     = useState(false);
-  const navRef                    = useRef<HTMLDivElement>(null);
+  const [page, setPage]         = useState<Page>("home");
+  const [article, setArticle]   = useState<Article | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [ereOpen, setEreOpen]   = useState(false);
+  const navRef                  = useRef<HTMLDivElement>(null);
 
   const today = new Intl.DateTimeFormat("pt-BR", {
     weekday:"long", day:"numeric", month:"long", year:"numeric",
@@ -578,19 +575,21 @@ export default function App() {
 
   return (
     <div className="app">
-      {/* Top Bar */}
+      {/* ── Top Bar ── */}
       <div className="topbar">
         <div className="topbar-inner">
           <button className="logo-btn" onClick={() => nav("home")}>
-            <span className="logo-nl">NL</span>
-            <span className="logo-oranje">Oranje</span>
-            <span className="logo-news">News</span>
+            <img src="logo.png" alt="Futebol Holandês" className="logo-img" />
+            <div className="logo-text">
+              <span className="logo-title">Futebol Holandês</span>
+              <span className="logo-sub">tudo sobre o futebol da Holanda</span>
+            </div>
           </button>
           <span className="topbar-date"><i className="bx bx-calendar" /> {today}</span>
         </div>
       </div>
 
-      {/* Navbar */}
+      {/* ── Navbar ── */}
       <nav className="navbar" ref={navRef}>
         <div className="nav-inner">
           <div className="nav-links">
@@ -627,7 +626,7 @@ export default function App() {
         )}
       </nav>
 
-      {/* Content */}
+      {/* ── Content ── */}
       <div className="container">
         {article
           ? <ArticlePage article={article} onBack={closeArticle} />
@@ -637,14 +636,13 @@ export default function App() {
         }
       </div>
 
-      {/* Footer */}
+      {/* ── Footer ── */}
       <footer className="footer">
         <div className="footer-inner">
-          <div className="footer-logo">
-            <span className="logo-oranje">Oranje</span><span className="logo-news">News</span>
-          </div>
+          <img src="logo.png" alt="Futebol Holandês" className="footer-logo-img" />
+          <p className="footer-title">Futebol Holandês</p>
           <p className="footer-tagline">Tudo sobre o futebol da Holanda em português</p>
-          <p className="footer-copy">© 2026 OranjeNews · Todos os direitos reservados</p>
+          <p className="footer-copy">© 2026 Futebol Holandês · Todos os direitos reservados</p>
         </div>
       </footer>
     </div>
