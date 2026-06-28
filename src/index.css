@@ -98,10 +98,11 @@ ul, ol  { list-style: none; }
   filter: drop-shadow(0 3px 10px rgba(255,98,0,0.55));
 }
 .logo-text {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  line-height: 1;
+      flex-direction: column;
+    gap: 6px;
+    align-items: flex-start;
+    line-height: 1;
+    display: flex;
 }
 .logo-title {
   font-family: var(--font-display);
