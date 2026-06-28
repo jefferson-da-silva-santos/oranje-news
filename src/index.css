@@ -1696,63 +1696,39 @@ ul, ol  { list-style: none; }
    NOTYF OVERRIDES
    ═══════════════════════════════════════════════════════════════════════════ */
 
-.notyf {
-  z-index: 99999 !important;
-}
+.notyf { z-index: 99999 !important; }
 
 .notyf__toast {
-  border-radius: 10px !important;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.22) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.25) !important;
   font-family: 'Inter', system-ui, sans-serif !important;
   font-size: 0.85rem !important;
   font-weight: 600 !important;
-  min-width: 260px !important;
-  max-width: 360px !important;
-  padding: 0 !important;
-  overflow: hidden !important;
+  min-width: 240px !important;
+  max-width: 340px !important;
+  padding: 0.75rem 1rem !important;
+  display: flex !important;
+  align-items: center !important;
 }
 
 .notyf__toast--success { background: #FF6200 !important; }
 .notyf__toast--error   { background: #dc2626 !important; }
-
-/* Remove o ícone SVG padrão do Notyf e usa o nosso */
-.notyf__icon {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  background: rgba(0,0,0,0.15) !important;
-  border-radius: 0 !important;
-  width: 48px !important;
-  min-width: 48px !important;
-  height: 100% !important;
-  min-height: 52px !important;
-  position: relative !important;
-}
-
-/* Esconde o SVG animado interno */
-.notyf__icon svg,
-.notyf__icon--success svg,
-.notyf__icon--error svg { display: none !important; }
-
-/* Mostra o ícone Boxicons */
-.notyf__icon i {
-  font-size: 1.3rem !important;
-  color: #fff !important;
-  display: block !important;
-}
 
 .notyf__wrapper {
   display: flex !important;
   align-items: center !important;
   padding: 0 !important;
   gap: 0 !important;
-  min-height: 52px !important;
+  width: 100% !important;
 }
+
+.notyf__icon { display: none !important; }
 
 .notyf__message {
   color: #fff !important;
   font-weight: 600 !important;
-  padding: 0.75rem 1rem !important;
+  padding: 0 !important;
+  margin: 0 !important;
   flex: 1 !important;
   line-height: 1.4 !important;
 }
@@ -1761,27 +1737,26 @@ ul, ol  { list-style: none; }
 
 .notyf__dismiss {
   background: rgba(0,0,0,0.15) !important;
-  border-left: 1px solid rgba(255,255,255,0.15) !important;
-  border-radius: 0 !important;
-  width: 36px !important;
-  min-width: 36px !important;
-  height: 100% !important;
-  min-height: 52px !important;
+  border-radius: 4px !important;
+  width: 20px !important;
+  height: 20px !important;
+  min-width: 20px !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  transition: background 0.15s !important;
+  margin-left: 0.75rem !important;
+  flex-shrink: 0 !important;
 }
-.notyf__dismiss:hover { background: rgba(0,0,0,0.25) !important; }
 .notyf__dismiss-btn {
-  width: 14px !important;
-  height: 14px !important;
+  width: 10px !important;
+  height: 10px !important;
 }
 .notyf__dismiss-btn::after,
 .notyf__dismiss-btn::before {
-  background: rgba(255,255,255,0.85) !important;
-  width: 14px !important;
+  background: rgba(255,255,255,0.9) !important;
+  width: 10px !important;
 }
+
 
 /* ── Icon Picker ──────────────────────────────────────────────────────────── */
 .icon-picker {
