@@ -98,11 +98,10 @@ ul, ol  { list-style: none; }
   filter: drop-shadow(0 3px 10px rgba(255,98,0,0.55));
 }
 .logo-text {
-      flex-direction: column;
-    gap: 6px;
-    align-items: flex-start;
-    line-height: 1;
-    display: flex;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  line-height: 1;
 }
 .logo-title {
   font-family: var(--font-display);
@@ -1697,7 +1696,7 @@ ul, ol  { list-style: none; }
    NOTYF OVERRIDES
    ═══════════════════════════════════════════════════════════════════════════ */
 
-/* .notyf { z-index: 99999 !important; }
+.notyf { z-index: 99999 !important; }
 .notyf__toast--success { background: #FF6200 !important; }
 .notyf__toast--error   { background: #dc2626 !important; }
 .notyf__toast--warning { background: #d97706 !important; }
@@ -1712,7 +1711,7 @@ ul, ol  { list-style: none; }
 .notyf__icon   { display: none !important; }
 .notyf__ripple { display: none !important; }
 .notyf__dismiss { display: none !important; }
-.notyf__message { color: #fff !important; font-weight: 600 !important; } */
+.notyf__message { color: #fff !important; font-weight: 600 !important; }
 
 
 /* ── Icon Picker ──────────────────────────────────────────────────────────── */
@@ -1829,3 +1828,12 @@ ul, ol  { list-style: none; }
   margin-top: 0.25rem;
   line-height: 1.4;
 }
+
+/* ── Admin nav active ─────────────────────────────────────────────────────── */
+.adm-tool-btn-active {
+  background: var(--orange-light) !important;
+  color: var(--orange) !important;
+  border-color: rgba(255,98,0,0.3) !important;
+  font-weight: 700 !important;
+}
+.adm-tool-btn-active i { color: var(--orange) !important; }

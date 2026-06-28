@@ -1,94 +1,79 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { articlesApi, normalizeArticle, type Article } from "./api";
+import {
+  articlesApi, standingsApi, convocationApi, fixturesApi, nationsApi,
+  scorersApi, configApi, normalizeArticle,
+  type Article, type Standing, type Convocation, type Fixture,
+  type NationsGroup, type TopScorer, type SiteConfig,
+} from "./api";
 import { useNotyf } from "./useNotyf";
 import Admin from "./Admin";
 
-// ─── Static data ──────────────────────────────────────────────────────────────
-const STANDINGS = [
-  { pos: 1, team:"PSV Eindhoven",  champion:true,  j:34,v:22,e:5,d:7, sg:"+46",pts:71 },
-  { pos: 2, team:"Feyenoord",                      j:34,v:19,e:4,d:11,sg:"+22",pts:61 },
-  { pos: 3, team:"NEC Nijmegen",                   j:34,v:17,e:5,d:12,sg:"+10",pts:56 },
-  { pos: 4, team:"Ajax",                           j:34,v:16,e:7,d:11,sg:"+16",pts:55 },
-  { pos: 5, team:"FC Twente",                      j:34,v:16,e:7,d:11,sg:"+9", pts:55 },
-  { pos: 6, team:"AZ Alkmaar",                     j:34,v:14,e:8,d:12,sg:"+8", pts:50 },
-  { pos: 7, team:"Heerenveen",                     j:34,v:14,e:8,d:12,sg:"+3", pts:50 },
-  { pos: 8, team:"Go Ahead Eagles",                j:34,v:13,e:6,d:15,sg:"-8", pts:45 },
-  { pos: 9, team:"Sparta Rotterdam",               j:34,v:12,e:8,d:14,sg:"-5", pts:44 },
-  { pos:10, team:"FC Utrecht",                     j:34,v:11,e:9,d:14,sg:"-4", pts:42 },
-  { pos:11, team:"Fortuna Sittard",                j:34,v:11,e:7,d:16,sg:"-14",pts:40 },
-  { pos:12, team:"NAC Breda",                      j:34,v:10,e:9,d:15,sg:"-12",pts:39 },
-  { pos:13, team:"Heracles",                       j:34,v:10,e:8,d:16,sg:"-16",pts:38 },
-  { pos:14, team:"Groningen",                      j:34,v:9, e:9,d:16,sg:"-18",pts:36 },
-  { pos:15, team:"Telstar",                        j:34,v:9, e:7,d:18,sg:"-26",pts:34 },
-  { pos:16, team:"Zwolle",       relegation:true,  j:34,v:8, e:8,d:18,sg:"-25",pts:32 },
-  { pos:17, team:"Excelsior",    relegation:true,  j:34,v:6, e:8,d:20,sg:"-35",pts:26 },
-  { pos:18, team:"Volendam",     relegation:true,  j:34,v:4, e:6,d:24,sg:"-50",pts:18 },
-];
-const NL_GROUP = [
-  {pos:1,team:"Holanda", j:6,v:4,e:1,d:1,pts:13,highlight:true},
-  {pos:2,team:"Alemanha",j:6,v:3,e:3,d:0,pts:12},
-  {pos:3,team:"Hungria", j:6,v:1,e:2,d:3,pts:5 },
-  {pos:4,team:"Bósnia",  j:6,v:0,e:1,d:5,pts:1 },
-];
-const CONVOCADOS = [
-  {pos:"Goleiros",      jogadores:["Bart Verbruggen (Brighton)","Mark Flekken (Brentford)","Justin Bijlow (Feyenoord)"]},
-  {pos:"Defensores",    jogadores:["Virgil van Dijk (Liverpool)","Nathan Aké (Man. City)","Jurriën Timber (Arsenal)","Denzel Dumfries (Inter)","Daley Blind (Girona)"]},
-  {pos:"Meio-campistas",jogadores:["Frenkie de Jong (Barcelona)","Teun Koopmeiners (Juventus)","Tijjani Reijnders (AC Milan)","Ryan Gravenberch (Liverpool)"]},
-  {pos:"Atacantes",     jogadores:["Cody Gakpo (Liverpool)","Memphis Depay (Corinthians)","Donyell Malen (B. Dortmund)","Xavi Simons (PSG)"]},
-];
-const FIXTURES = [
-  {date:"5",  month:"set 2026",comp:"Nations League",home:"Holanda",away:"Alemanha",time:"20h45"},
-  {date:"8",  month:"set 2026",comp:"Nations League",home:"Bélgica", away:"Holanda", time:"18h00"},
-  {date:"11", month:"out 2026",comp:"Nations League",home:"Holanda",away:"França",  time:"20h45"},
-  {date:"14", month:"out 2026",comp:"Nations League",home:"Holanda",away:"Portugal",time:"20h45"},
-];
-
 // ─── Widgets ──────────────────────────────────────────────────────────────────
-function StandingsWidget() {
+function StandingsWidget({ standing }: { standing: Standing | null }) {
+  if (!standing) return null;
   return (
     <div className="widget">
-      <div className="widget-head"><i className="bx bxs-trophy widget-head-icon"/><span>Eredivisie 2025-26</span></div>
+      <div className="widget-head"><i className="bx bxs-trophy widget-head-icon"/><span>{standing.title}</span></div>
       <div className="widget-table-wrap">
         <table className="wtable">
           <thead><tr><th>#</th><th className="tl">Time</th><th>J</th><th>V</th><th>E</th><th>D</th><th>SG</th><th>Pts</th></tr></thead>
           <tbody>
-            {STANDINGS.map(r=>(
-              <tr key={r.pos} className={r.champion?"row-champ":r.relegation?"row-rel":""}>
-                <td className={`pos ${r.pos<=2?"cl":r.pos<=5?"el":r.relegation?"rd":""}`}>{r.pos}</td>
+            {standing.entries.map(r=>(
+              <tr key={r.id} className={r.champion?"row-champ":r.relegation?"row-rel":""}>
+                <td className={`pos ${r.clSpot?"cl":r.elSpot?"el":r.relegation?"rd":""}`}>{r.position}</td>
                 <td className="tname tl">{r.team}{r.champion&&" 🏆"}</td>
-                <td>{r.j}</td><td>{r.v}</td><td>{r.e}</td><td>{r.d}</td>
-                <td className={r.sg.startsWith("+")?"pos-sg":"neg-sg"}>{r.sg}</td>
-                <td className="pts">{r.pts}</td>
+                <td>{r.played}</td><td>{r.wins}</td><td>{r.draws}</td><td>{r.losses}</td>
+                <td className={r.goalDiff.startsWith("+")?"pos-sg":"neg-sg"}>{r.goalDiff}</td>
+                <td className="pts">{r.points}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
-      <p className="widget-foot">Temporada encerrada · Campeão: PSV 🏆</p>
+      {standing.footer && <p className="widget-foot">{standing.footer}</p>}
     </div>
   );
 }
 
-function NationsWidget() {
+function NationsWidget({ nations }: { nations: NationsGroup | null }) {
+  if (!nations) return null;
   return (
     <div className="widget">
-      <div className="widget-head"><i className="bx bx-flag widget-head-icon"/><span>Nations League — Grupo 3A</span></div>
+      <div className="widget-head"><i className="bx bx-flag widget-head-icon"/><span>{nations.title}</span></div>
       <div className="widget-table-wrap">
         <table className="wtable">
           <thead><tr><th>#</th><th className="tl">Time</th><th>J</th><th>V</th><th>E</th><th>D</th><th>Pts</th></tr></thead>
           <tbody>
-            {NL_GROUP.map(r=>(
-              <tr key={r.pos} className={r.highlight?"row-champ":""}>
-                <td className={`pos ${r.pos===1?"cl":""}`}>{r.pos}</td>
+            {nations.entries.map(r=>(
+              <tr key={r.id} className={r.highlight?"row-champ":""}>
+                <td className={`pos ${r.position===1?"cl":""}`}>{r.position}</td>
                 <td className="tname tl">{r.team}{r.highlight&&" 🇳🇱"}</td>
-                <td>{r.j}</td><td>{r.v}</td><td>{r.e}</td><td>{r.d}</td>
-                <td className="pts">{r.pts}</td>
+                <td>{r.played}</td><td>{r.wins}</td><td>{r.draws}</td><td>{r.losses}</td>
+                <td className="pts">{r.points}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
-      <p className="widget-foot">Grupo 3 · Liga A</p>
+      {nations.footer && <p className="widget-foot">{nations.footer}</p>}
+    </div>
+  );
+}
+
+function ScorersWidget({ scorers }: { scorers: TopScorer[] }) {
+  if (!scorers.length) return null;
+  return (
+    <div className="widget">
+      <div className="widget-head"><i className="bx bxs-star widget-head-icon"/><span>Artilheiros Históricos</span></div>
+      <div className="scorers">
+        {scorers.map(s=>(
+          <div key={s.id} className="scorer-row">
+            <span className={`sc-rank${s.rank===1?" sc-gold":s.rank===2?" sc-silver":s.rank===3?" sc-bronze":""}`}>{s.rank}</span>
+            <span className="sc-name">{s.name}</span>
+            <span className="sc-goals">{s.goals} <i className="bx bx-football"/></span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -110,7 +95,6 @@ function ArticleCard({article,onClick}:{article:Article;onClick:()=>void}) {
   );
 }
 
-// ─── Hero Card ────────────────────────────────────────────────────────────────
 function HeroCard({article,size,onClick}:{article:Article;size:"large"|"small";onClick:()=>void}) {
   return (
     <article className={`hero-${size}`} onClick={onClick} role="button" tabIndex={0} onKeyDown={e=>e.key==="Enter"&&onClick()}>
@@ -127,7 +111,7 @@ function HeroCard({article,size,onClick}:{article:Article;size:"large"|"small";o
   );
 }
 
-// ─── Loading skeleton ─────────────────────────────────────────────────────────
+// ─── Skeleton ─────────────────────────────────────────────────────────────────
 function PageSkeleton() {
   return (
     <div className="layout-grid">
@@ -149,7 +133,10 @@ function PageSkeleton() {
 }
 
 // ─── Article Page ─────────────────────────────────────────────────────────────
-function ArticlePage({article,articles,onBack,onOpen}:{article:Article;articles:Article[];onBack:()=>void;onOpen:(a:Article)=>void}) {
+function ArticlePage({ article, articles, standing, nations, onBack, onOpen }: {
+  article: Article; articles: Article[]; standing: Standing|null; nations: NationsGroup|null;
+  onBack: ()=>void; onOpen: (a:Article)=>void;
+}) {
   useEffect(()=>{window.scrollTo({top:0,behavior:"smooth"});},[]);
   const related = articles.filter(a=>a.id!==article.id&&a.category.id===article.category.id).slice(0,2);
   const readTime = Math.max(1, Math.ceil(article.body.join(" ").split(" ").length/200));
@@ -194,13 +181,18 @@ function ArticlePage({article,articles,onBack,onOpen}:{article:Article;articles:
           </section>
         )}
       </main>
-      <aside className="sidebar"><StandingsWidget/><NationsWidget/></aside>
+      <aside className="sidebar">
+        <StandingsWidget standing={standing}/>
+        <NationsWidget nations={nations}/>
+      </aside>
     </div>
   );
 }
 
 // ─── Pages ────────────────────────────────────────────────────────────────────
-function HomePage({articles,onOpen}:{articles:Article[];onOpen:(a:Article)=>void}) {
+function HomePage({ articles, standing, nations, onOpen }: {
+  articles: Article[]; standing: Standing|null; nations: NationsGroup|null; onOpen:(a:Article)=>void;
+}) {
   const published  = articles.filter(a=>a.published);
   const highlights = published.slice(0,3);
   const moreNews   = published.slice(3,6);
@@ -229,19 +221,26 @@ function HomePage({articles,onOpen}:{articles:Article[];onOpen:(a:Article)=>void
           </section>
         )}
       </main>
-      <aside className="sidebar"><StandingsWidget/><NationsWidget/></aside>
+      <aside className="sidebar">
+        <StandingsWidget standing={standing}/>
+        <NationsWidget nations={nations}/>
+      </aside>
     </div>
   );
 }
 
-function EredivisieePage({articles,onOpen}:{articles:Article[];onOpen:(a:Article)=>void}) {
+function EredivisieePage({ articles, standing, config, onOpen }: {
+  articles: Article[]; standing: Standing|null; config: SiteConfig; onOpen:(a:Article)=>void;
+}) {
   const news = articles.filter(a=>a.category.name==="Eredivisie"&&a.published);
   return (
     <div className="layout-grid">
       <main className="main">
         <section className="page-section">
-          <div className="sec-head"><span className="sec-label"><i className="bx bxs-trophy"/> Eredivisie 2025-26</span></div>
-          <p className="page-intro">A temporada 2025-26 foi encerrada com o <strong>PSV Eindhoven</strong> conquistando seu 27º título nacional com 71 pontos, liderando a competição de ponta a ponta.</p>
+          <div className="sec-head"><span className="sec-label"><i className="bx bxs-trophy"/> {standing?.title||"Eredivisie"}</span></div>
+          {config.eredivisie_intro && (
+            <p className="page-intro" dangerouslySetInnerHTML={{__html: config.eredivisie_intro.replace(/PSV Eindhoven/g,"<strong>PSV Eindhoven</strong>")}}/>
+          )}
         </section>
         <section className="page-section">
           <div className="sec-head"><span className="sec-label"><i className="bx bx-news"/> Notícias</span></div>
@@ -249,37 +248,42 @@ function EredivisieePage({articles,onOpen}:{articles:Article[];onOpen:(a:Article
             ?<div className="news-grid">{news.map(n=><ArticleCard key={n.id} article={n} onClick={()=>onOpen(n)}/>)}</div>
             :<div className="empty-state"><i className="bx bx-news"/><p>Nenhuma notícia da Eredivisie.</p></div>}
         </section>
-        <section className="page-section">
-          <div className="sec-head"><span className="sec-label"><i className="bx bx-bar-chart-alt-2"/> Classificação Final</span></div>
-          <div className="table-wrap">
-            <table className="full-table">
-              <thead><tr><th>#</th><th className="tl">Time</th><th>J</th><th>V</th><th>E</th><th>D</th><th>SG</th><th>Pts</th></tr></thead>
-              <tbody>
-                {STANDINGS.map(r=>(
-                  <tr key={r.pos} className={r.champion?"row-champ":r.relegation?"row-rel":""}>
-                    <td className={`pos ${r.pos<=2?"cl":r.pos<=5?"el":r.relegation?"rd":""}`}>{r.pos}</td>
-                    <td className="tname tl">{r.team}{r.champion&&" 🏆"}</td>
-                    <td>{r.j}</td><td>{r.v}</td><td>{r.e}</td><td>{r.d}</td>
-                    <td className={r.sg.startsWith("+")?"pos-sg":"neg-sg"}>{r.sg}</td>
-                    <td className="pts">{r.pts}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            <div className="table-legend">
-              <span><span className="leg cl"/> Champions League</span>
-              <span><span className="leg el"/> Europa League</span>
-              <span><span className="leg rd"/> Rebaixamento</span>
+        {standing && (
+          <section className="page-section">
+            <div className="sec-head"><span className="sec-label"><i className="bx bx-bar-chart-alt-2"/> Classificação Final</span></div>
+            <div className="table-wrap">
+              <table className="full-table">
+                <thead><tr><th>#</th><th className="tl">Time</th><th>J</th><th>V</th><th>E</th><th>D</th><th>SG</th><th>Pts</th></tr></thead>
+                <tbody>
+                  {standing.entries.map(r=>(
+                    <tr key={r.id} className={r.champion?"row-champ":r.relegation?"row-rel":""}>
+                      <td className={`pos ${r.clSpot?"cl":r.elSpot?"el":r.relegation?"rd":""}`}>{r.position}</td>
+                      <td className="tname tl">{r.team}{r.champion&&" 🏆"}</td>
+                      <td>{r.played}</td><td>{r.wins}</td><td>{r.draws}</td><td>{r.losses}</td>
+                      <td className={r.goalDiff.startsWith("+")?"pos-sg":"neg-sg"}>{r.goalDiff}</td>
+                      <td className="pts">{r.points}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <div className="table-legend">
+                <span><span className="leg cl"/> Champions League</span>
+                <span><span className="leg el"/> Europa League</span>
+                <span><span className="leg rd"/> Rebaixamento</span>
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
+        )}
       </main>
-      <aside className="sidebar"><StandingsWidget/></aside>
+      <aside className="sidebar"><StandingsWidget standing={standing}/></aside>
     </div>
   );
 }
 
-function SelecaoPage({articles,onOpen}:{articles:Article[];onOpen:(a:Article)=>void}) {
+function SelecaoPage({ articles, nations, scorers, convocation, fixtures, onOpen }: {
+  articles: Article[]; nations: NationsGroup|null; scorers: TopScorer[];
+  convocation: Convocation|null; fixtures: Fixture[]; onOpen:(a:Article)=>void;
+}) {
   const news = articles.filter(a=>a.category.name==="Seleção Holandesa"&&a.published);
   return (
     <div className="layout-grid">
@@ -288,51 +292,46 @@ function SelecaoPage({articles,onOpen}:{articles:Article[];onOpen:(a:Article)=>v
           <div className="sec-head"><span className="sec-label"><i className="bx bx-flag"/> Seleção Holandesa</span></div>
           {news.map(n=><HeroCard key={n.id} article={n} size="large" onClick={()=>onOpen(n)}/>)}
         </section>
-        <section className="page-section">
-          <div className="sec-head"><span className="sec-label"><i className="bx bxs-group"/> Última Convocação</span></div>
-          <div className="conv-grid">
-            {CONVOCADOS.map(g=>(
-              <div key={g.pos} className="conv-group">
-                <h4 className="conv-pos"><i className="bx bx-chevron-right"/> {g.pos}</h4>
-                <ul>{g.jogadores.map(j=><li key={j}><i className="bx bx-user"/> {j}</li>)}</ul>
-              </div>
-            ))}
-          </div>
-        </section>
-        <section className="page-section">
-          <div className="sec-head"><span className="sec-label"><i className="bx bx-calendar-event"/> Próximos Jogos</span></div>
-          <div className="fixtures">
-            {FIXTURES.map((f,i)=>(
-              <div key={i} className="fixture">
-                <div className="fx-date"><span className="fx-day">{f.date}</span><span className="fx-month">{f.month}</span></div>
-                <div className="fx-mid">
-                  <span className="fx-comp"><i className="bx bx-trophy"/> {f.comp}</span>
-                  <div className="fx-teams">
-                    <span className={f.home==="Holanda"?"fx-team hl":"fx-team"}>{f.home}</span>
-                    <span className="fx-vs">vs</span>
-                    <span className={f.away==="Holanda"?"fx-team hl":"fx-team"}>{f.away}</span>
-                  </div>
+
+        {convocation && convocation.groups.length > 0 && (
+          <section className="page-section">
+            <div className="sec-head"><span className="sec-label"><i className="bx bxs-group"/> {convocation.title}</span></div>
+            <div className="conv-grid">
+              {convocation.groups.map(g=>(
+                <div key={g.id} className="conv-group">
+                  <h4 className="conv-pos"><i className="bx bx-chevron-right"/> {g.position}</h4>
+                  <ul>{g.players.map(j=><li key={j}><i className="bx bx-user"/> {j}</li>)}</ul>
                 </div>
-                <div className="fx-time"><i className="bx bx-time"/> {f.time}</div>
-              </div>
-            ))}
-          </div>
-        </section>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {fixtures.length > 0 && (
+          <section className="page-section">
+            <div className="sec-head"><span className="sec-label"><i className="bx bx-calendar-event"/> Próximos Jogos</span></div>
+            <div className="fixtures">
+              {fixtures.map(f=>(
+                <div key={f.id} className="fixture">
+                  <div className="fx-date"><span className="fx-day">{f.day}</span><span className="fx-month">{f.month}</span></div>
+                  <div className="fx-mid">
+                    <span className="fx-comp"><i className="bx bx-trophy"/> {f.competition}</span>
+                    <div className="fx-teams">
+                      <span className={f.homeTeam==="Holanda"?"fx-team hl":"fx-team"}>{f.homeTeam}</span>
+                      <span className="fx-vs">vs</span>
+                      <span className={f.awayTeam==="Holanda"?"fx-team hl":"fx-team"}>{f.awayTeam}</span>
+                    </div>
+                  </div>
+                  <div className="fx-time"><i className="bx bx-time"/> {f.time}</div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
       </main>
       <aside className="sidebar">
-        <NationsWidget/>
-        <div className="widget">
-          <div className="widget-head"><i className="bx bxs-star widget-head-icon"/><span>Artilheiros Históricos</span></div>
-          <div className="scorers">
-            {[{rank:1,name:"Robin van Persie",goals:50},{rank:2,name:"Memphis Depay",goals:44},{rank:3,name:"Patrick Kluivert",goals:40},{rank:4,name:"Cody Gakpo",goals:22},{rank:5,name:"Wout Weghorst",goals:9}].map(s=>(
-              <div key={s.rank} className="scorer-row">
-                <span className={`sc-rank${s.rank===1?" sc-gold":s.rank===2?" sc-silver":s.rank===3?" sc-bronze":""}`}>{s.rank}</span>
-                <span className="sc-name">{s.name}</span>
-                <span className="sc-goals">{s.goals} <i className="bx bx-football"/></span>
-              </div>
-            ))}
-          </div>
-        </div>
+        <NationsWidget nations={nations}/>
+        <ScorersWidget scorers={scorers}/>
       </aside>
     </div>
   );
@@ -342,35 +341,53 @@ function SelecaoPage({articles,onOpen}:{articles:Article[];onOpen:(a:Article)=>v
 type Page = "home"|"eredivisie"|"selecao";
 
 export default function App() {
-  const [articles,   setArticles]   = useState<Article[]>([]);
-  const [loading,    setLoading]    = useState(true);
-  const [page,       setPage]       = useState<Page>("home");
-  const [article,    setArticle]    = useState<Article|null>(null);
-  const [menuOpen,   setMenuOpen]   = useState(false);
-  const [ereOpen,    setEreOpen]    = useState(false);
-  const [adminMode,  setAdminMode]  = useState(false);
+  const [articles,    setArticles]    = useState<Article[]>([]);
+  const [standing,    setStanding]    = useState<Standing|null>(null);
+  const [nations,     setNations]     = useState<NationsGroup|null>(null);
+  const [scorers,     setScorers]     = useState<TopScorer[]>([]);
+  const [convocation, setConvocation] = useState<Convocation|null>(null);
+  const [fixtures,    setFixtures]    = useState<Fixture[]>([]);
+  const [config,      setConfig]      = useState<SiteConfig>({});
+  const [loading,     setLoading]     = useState(true);
+  const [page,        setPage]        = useState<Page>("home");
+  const [article,     setArticle]     = useState<Article|null>(null);
+  const [menuOpen,    setMenuOpen]    = useState(false);
+  const [ereOpen,     setEreOpen]     = useState(false);
+  const [adminMode,   setAdminMode]   = useState(false);
   const navRef = useRef<HTMLDivElement>(null);
+  const notyf  = useNotyf();
 
-  const today = new Intl.DateTimeFormat("pt-BR",{weekday:"long",day:"numeric",month:"long",year:"numeric"})
-    .format(new Date(2026,5,27));
+  const today = new Intl.DateTimeFormat("pt-BR",{weekday:"long",day:"numeric",month:"long",year:"numeric"}).format(new Date());
 
-  const notyf = useNotyf();
-
-  const loadArticles = useCallback(async () => {
+  const loadAll = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await articlesApi.list({ published: true, limit: 50 });
-      setArticles(res.articles.map(normalizeArticle));
-    } catch (err: any) {
-      notyf.error("Erro ao carregar artigos. Verifique a conexão com a API.");
+      const [artRes, st, nat, sc, conv, fix, cfg] = await Promise.all([
+        articlesApi.list({ published: true, limit: 50 }),
+        standingsApi.get(),
+        nationsApi.get(),
+        scorersApi.list(),
+        convocationApi.get(),
+        fixturesApi.list(),
+        configApi.get(),
+      ]);
+      setArticles(artRes.articles.map(normalizeArticle));
+      setStanding(st);
+      setNations(nat);
+      setScorers(sc);
+      setConvocation(conv);
+      setFixtures(fix);
+      setConfig(cfg);
+    } catch {
+      notyf.error("Erro ao carregar dados. Verifique a conexão com a API.");
     } finally {
       setLoading(false);
     }
   }, []);
 
-  useEffect(() => { loadArticles(); }, [loadArticles]);
+  useEffect(()=>{ loadAll(); },[loadAll]);
 
-  useEffect(() => {
+  useEffect(()=>{
     function handler(e: MouseEvent) {
       if (navRef.current && !navRef.current.contains(e.target as Node)) {
         setEreOpen(false); setMenuOpen(false);
@@ -378,18 +395,20 @@ export default function App() {
     }
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
-  }, []);
+  },[]);
 
   function nav(p: Page) {
-    setPage(p); setArticle(null);
-    setMenuOpen(false); setEreOpen(false);
+    setPage(p); setArticle(null); setMenuOpen(false); setEreOpen(false);
     window.scrollTo({top:0,behavior:"smooth"});
   }
-
   function openArticle(a: Article) { setArticle(a); window.scrollTo({top:0,behavior:"smooth"}); }
   function closeArticle() { setArticle(null); window.scrollTo({top:0,behavior:"smooth"}); }
+  function exitAdmin() { loadAll(); setAdminMode(false); }
 
-  function exitAdmin() { loadArticles(); setAdminMode(false); }
+  const siteName    = config.site_name    || "Futebol Holandês";
+  const siteSub     = config.site_sub     || "tudo sobre o futebol da Holanda";
+  const footerTag   = config.site_tagline || "Tudo sobre o futebol da Holanda em português";
+  const footerCopy  = config.footer_copy  || "© 2026 Futebol Holandês · Todos os direitos reservados";
 
   if (adminMode) return <Admin onExit={exitAdmin}/>;
 
@@ -398,10 +417,10 @@ export default function App() {
       <div className="topbar">
         <div className="topbar-inner">
           <button className="logo-btn" onClick={()=>nav("home")}>
-            <img src="logo.png" alt="Futebol Holandês" className="logo-img"/>
+            <img src="logo.png" alt={siteName} className="logo-img"/>
             <div className="logo-text">
-              <span className="logo-title">Futebol Holandês</span>
-              <span className="logo-sub">tudo sobre o futebol da Holanda</span>
+              <span className="logo-title">{siteName}</span>
+              <span className="logo-sub">{siteSub}</span>
             </div>
           </button>
           <div className="topbar-right">
@@ -452,19 +471,19 @@ export default function App() {
 
       <div className="container">
         {loading ? <PageSkeleton/> : article
-          ? <ArticlePage article={article} articles={articles} onBack={closeArticle} onOpen={openArticle}/>
-          : page==="home"       ? <HomePage articles={articles} onOpen={openArticle}/>
-          : page==="eredivisie" ? <EredivisieePage articles={articles} onOpen={openArticle}/>
-          : <SelecaoPage articles={articles} onOpen={openArticle}/>
+          ? <ArticlePage article={article} articles={articles} standing={standing} nations={nations} onBack={closeArticle} onOpen={openArticle}/>
+          : page==="home"       ? <HomePage articles={articles} standing={standing} nations={nations} onOpen={openArticle}/>
+          : page==="eredivisie" ? <EredivisieePage articles={articles} standing={standing} config={config} onOpen={openArticle}/>
+          : <SelecaoPage articles={articles} nations={nations} scorers={scorers} convocation={convocation} fixtures={fixtures} onOpen={openArticle}/>
         }
       </div>
 
       <footer className="footer">
         <div className="footer-inner">
-          <img src="logo.png" alt="Futebol Holandês" className="footer-logo-img"/>
-          <p className="footer-title">Futebol Holandês</p>
-          <p className="footer-tagline">Tudo sobre o futebol da Holanda em português</p>
-          <p className="footer-copy">© 2026 Futebol Holandês · Todos os direitos reservados</p>
+          <img src="logo.png" alt={siteName} className="footer-logo-img"/>
+          <p className="footer-title">{siteName}</p>
+          <p className="footer-tagline">{footerTag}</p>
+          <p className="footer-copy">{footerCopy}</p>
         </div>
       </footer>
     </div>
