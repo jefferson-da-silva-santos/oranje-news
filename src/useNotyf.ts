@@ -2,31 +2,15 @@ import { Notyf } from "notyf";
 import "notyf/notyf.min.css";
 
 const notyf = new Notyf({
-  duration: 3500,
-  position: { x: "right", y: "bottom" },
-  ripple: false,
+  duration:    3500,
+  position:    { x: "right", y: "bottom" },
+  ripple:      false,
   dismissible: false,
   types: [
-    {
-      type:       "success",
-      background: "#FF6200",
-      icon:       false,
-    },
-    {
-      type:       "error",
-      background: "#dc2626",
-      icon:       false,
-    },
-    {
-      type:       "warning",
-      background: "#d97706",
-      icon:       false,
-    },
-    {
-      type:       "info",
-      background: "#2563eb",
-      icon:       false,
-    },
+    { type: "success", background: "#FF6200", icon: false },
+    { type: "error",   background: "#dc2626", icon: false },
+    { type: "warning", background: "#d97706", icon: false },
+    { type: "info",    background: "#2563eb", icon: false },
   ],
 });
 

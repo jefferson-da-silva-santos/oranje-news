@@ -201,8 +201,9 @@ function ArticlePage({article,articles,onBack,onOpen}:{article:Article;articles:
 
 // ─── Pages ────────────────────────────────────────────────────────────────────
 function HomePage({articles,onOpen}:{articles:Article[];onOpen:(a:Article)=>void}) {
-  const highlights = articles.filter(a=>a.published && a.featured).slice(0,3);
-  const moreNews   = articles.filter(a=>a.published && !a.featured).slice(0,6);
+  const published  = articles.filter(a=>a.published);
+  const highlights = published.slice(0,3);
+  const moreNews   = published.slice(3,6);
   return (
     <div className="layout-grid">
       <main className="main">
