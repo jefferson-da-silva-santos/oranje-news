@@ -1,14 +1,14 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useNotyf } from "./useNotyf";
-import { useLocalStorage } from "./hooks/useLocalStorage";
-import ColorPicker from "./components/ColorPicker";
+import { useLocalStorage } from "./useLocalStorage";
+import ColorPicker from "./ColorPicker";
 import {
   authApi, articlesApi, categoriesApi, standingsApi, convocationApi,
-  fixturesApi, nationsApi, scorersApi, configApi, normalizeArticle, auth,
+  fixturesApi, nationsApi, scorersApi, configApi, menuApi, normalizeArticle, auth,
   type Article, type Category, type ArticleInput, type AdminUser,
   type StandingEntry, type Fixture,
-  type NationsEntry, type SiteConfig,
+  type NationsEntry, type SiteConfig, type MenuItem, type MenuItemInput,
 } from "./api";
 
 const ICONS: { cls: string; label: string }[] = [
@@ -689,6 +689,148 @@ function ConfigSection({ notyf }: { notyf: ReturnType<typeof useNotyf> }) {
   );
 }
 
+// ─── Menu Section ──────────────────────────────────────────────────────────────
+type MenuItemDraft = { label: string; icon: string; path: string; active: boolean; children: MenuItemDraft[] };
+
+function draftFromItem(it: MenuItem): MenuItemDraft {
+  return {
+    label: it.label, icon: it.icon, path: it.path, active: it.active,
+    children: (it.children||[]).map(c=>({label:c.label,icon:c.icon,path:c.path,active:c.active,children:[]})),
+  };
+}
+
+function MenuSection({ notyf }: { notyf: ReturnType<typeof useNotyf> }) {
+  const [loading,setLoading]=useState(true);
+  const [saving,setSaving]=useState(false);
+  const [items,setItems]=useState<MenuItemDraft[]>([]);
+  const [iconPickerFor,setIconPickerFor]=useState<string|null>(null);
+
+  useEffect(()=>{
+    menuApi.getAll().then(data=>setItems(data.map(draftFromItem))).catch(()=>notyf.error("Erro ao carregar menu.")).finally(()=>setLoading(false));
+  },[]);
+
+  function blankItem(): MenuItemDraft { return {label:"",icon:"bx bx-link",path:"/",active:true,children:[]}; }
+
+  function addItem(){ setItems(p=>[...p,blankItem()]); }
+  function removeItem(i:number){ setItems(p=>p.filter((_,idx)=>idx!==i)); }
+  function updateItem(i:number,field:keyof MenuItemDraft,val:any){ setItems(p=>p.map((it,idx)=>idx===i?{...it,[field]:val}:it)); }
+  function moveItem(i:number,dir:-1|1){
+    setItems(p=>{
+      const j=i+dir; if(j<0||j>=p.length) return p;
+      const copy=[...p]; const [moved]=copy.splice(i,1); copy.splice(j,0,moved); return copy;
+    });
+  }
+
+  function addChild(parentIdx:number){
+    setItems(p=>p.map((it,idx)=>idx===parentIdx?{...it,children:[...it.children,{label:"",icon:"bx bx-link",path:"/",active:true,children:[]}]}:it));
+  }
+  function removeChild(parentIdx:number,childIdx:number){
+    setItems(p=>p.map((it,idx)=>idx===parentIdx?{...it,children:it.children.filter((_,ci)=>ci!==childIdx)}:it));
+  }
+  function updateChild(parentIdx:number,childIdx:number,field:keyof MenuItemDraft,val:any){
+    setItems(p=>p.map((it,idx)=>idx===parentIdx?{...it,children:it.children.map((c,ci)=>ci===childIdx?{...c,[field]:val}:c)}:it));
+  }
+
+  async function handleSave(){
+    if(items.some(it=>!it.label.trim()||!it.path.trim())){ notyf.error("Preencha label e link de todos os itens."); return; }
+    setSaving(true);
+    try{
+      const payload: MenuItemInput[] = items.map(it=>({
+        label: it.label.trim(), icon: it.icon, path: it.path.trim(), active: it.active,
+        children: it.children.filter(c=>c.label.trim()&&c.path.trim()).map(c=>({label:c.label.trim(),icon:c.icon,path:c.path.trim(),active:c.active})),
+      }));
+      const saved = await menuApi.update(payload);
+      setItems(saved.map(draftFromItem));
+      notyf.success("Menu salvo!");
+    }catch(err:any){ notyf.error(err.message); }
+    finally{ setSaving(false); }
+  }
+
+  if(loading) return <div className="adm-loading"><i className="bx bx-loader-alt bx-spin adm-loading-icon"/><p>Carregando...</p></div>;
+
+  return (
+    <div className="adm-form-wrap">
+      <div className="adm-form-header">
+        <h2 className="adm-form-title"><i className="bx bx-menu"/> Menu de Navegação</h2>
+      </div>
+      <div style={{padding:"1.25rem 1.5rem",display:"flex",flexDirection:"column",gap:"0.85rem"}}>
+        <p className="adm-field-hint" style={{marginTop:0}}>
+          Defina os itens do menu principal do site. Arraste a ordem com as setas e adicione sub-itens (dropdown) quando necessário.
+        </p>
+
+        {items.map((item,i)=>{
+          const pickerKey=`p-${i}`;
+          return (
+            <div key={i} style={{border:"1px solid var(--border)",borderRadius:"var(--r-lg)",background:"var(--surface)",overflow:"visible"}}>
+              <div style={{display:"flex",alignItems:"center",gap:"0.5rem",padding:"0.75rem 0.9rem",background:"var(--surface2)",borderBottom:"1px solid var(--border)",flexWrap:"wrap"}}>
+                <div style={{display:"flex",flexDirection:"column",gap:"2px"}}>
+                  <button onClick={()=>moveItem(i,-1)} disabled={i===0} style={{color:"var(--txt3)",fontSize:"0.8rem",cursor:i===0?"default":"pointer",opacity:i===0?0.3:1}}><i className="bx bx-chevron-up"/></button>
+                  <button onClick={()=>moveItem(i,1)} disabled={i===items.length-1} style={{color:"var(--txt3)",fontSize:"0.8rem",cursor:i===items.length-1?"default":"pointer",opacity:i===items.length-1?0.3:1}}><i className="bx bx-chevron-down"/></button>
+                </div>
+
+                <button type="button" onClick={()=>setIconPickerFor(iconPickerFor===pickerKey?null:pickerKey)} title="Escolher ícone"
+                  style={{width:"36px",height:"36px",borderRadius:"var(--r-sm)",border:"1px solid var(--border)",background:"var(--surface)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,cursor:"pointer"}}>
+                  <i className={item.icon} style={{fontSize:"1.1rem",color:"var(--orange)"}}/>
+                </button>
+
+                <input value={item.label} onChange={e=>updateItem(i,"label",e.target.value)} placeholder="Nome no menu" style={{flex:"1 1 160px",fontSize:"0.85rem",fontWeight:700,padding:"0.4rem 0.6rem",border:"1px solid var(--border)",borderRadius:"var(--r-sm)"}}/>
+                <input value={item.path} onChange={e=>updateItem(i,"path",e.target.value)} placeholder="/caminho ou https://..." style={{flex:"1 1 180px",fontSize:"0.8rem",fontFamily:"monospace",padding:"0.4rem 0.6rem",border:"1px solid var(--border)",borderRadius:"var(--r-sm)"}}/>
+
+                <label className="adm-toggle" style={{flexShrink:0}}>
+                  <input type="checkbox" checked={item.active} onChange={e=>updateItem(i,"active",e.target.checked)}/>
+                  <span className="adm-toggle-track"/>
+                  <span className="adm-toggle-label">{item.active?"Visível":"Oculto"}</span>
+                </label>
+
+                <button onClick={()=>removeItem(i)} title="Remover item" style={{color:"var(--red)",fontSize:"1.05rem",cursor:"pointer",flexShrink:0}}><i className="bx bx-trash"/></button>
+              </div>
+
+              {iconPickerFor===pickerKey&&(
+                <div style={{padding:"0.75rem 0.9rem",borderBottom:"1px solid var(--border)"}}>
+                  <div className="icon-picker">
+                    {ICONS.map(ic=>(
+                      <button key={ic.cls} type="button" className={`icon-pick-btn ${item.icon===ic.cls?"icon-pick-active":""}`} onClick={()=>{updateItem(i,"icon",ic.cls);setIconPickerFor(null);}} title={ic.label}>
+                        <i className={ic.cls}/><span>{ic.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Sub-itens */}
+              <div style={{padding:"0.65rem 0.9rem 0.9rem",display:"flex",flexDirection:"column",gap:"0.5rem"}}>
+                {item.children.map((child,ci)=>(
+                  <div key={ci} style={{display:"flex",alignItems:"center",gap:"0.5rem",marginLeft:"1.5rem",flexWrap:"wrap"}}>
+                    <i className="bx bx-subdirectory-right" style={{color:"var(--txt3)",fontSize:"0.9rem",flexShrink:0}}/>
+                    <input value={child.label} onChange={e=>updateChild(i,ci,"label",e.target.value)} placeholder="Sub-item" style={{flex:"1 1 140px",fontSize:"0.78rem",padding:"0.32rem 0.55rem",border:"1px solid var(--border)",borderRadius:"4px"}}/>
+                    <input value={child.path} onChange={e=>updateChild(i,ci,"path",e.target.value)} placeholder="/caminho" style={{flex:"1 1 140px",fontSize:"0.76rem",fontFamily:"monospace",padding:"0.32rem 0.55rem",border:"1px solid var(--border)",borderRadius:"4px"}}/>
+                    <button onClick={()=>removeChild(i,ci)} style={{color:"var(--red)",fontSize:"0.9rem",cursor:"pointer",flexShrink:0}}><i className="bx bx-trash"/></button>
+                  </div>
+                ))}
+                <button onClick={()=>addChild(i)} style={{marginLeft:"1.5rem",fontSize:"0.74rem",color:"var(--orange)",fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",gap:"0.3rem",width:"fit-content"}}>
+                  <i className="bx bx-plus"/> Adicionar sub-item
+                </button>
+              </div>
+            </div>
+          );
+        })}
+
+        <button onClick={addItem} style={{border:"2px dashed var(--border)",borderRadius:"var(--r-lg)",padding:"1.1rem",display:"flex",alignItems:"center",justifyContent:"center",gap:"0.5rem",color:"var(--txt3)",cursor:"pointer",fontSize:"0.85rem",fontWeight:600}}
+          onMouseEnter={e=>{(e.currentTarget as HTMLElement).style.borderColor="var(--orange)";(e.currentTarget as HTMLElement).style.color="var(--orange)";}}
+          onMouseLeave={e=>{(e.currentTarget as HTMLElement).style.borderColor="var(--border)";(e.currentTarget as HTMLElement).style.color="var(--txt3)";}}>
+          <i className="bx bx-plus" style={{fontSize:"1.2rem"}}/> Novo item de menu
+        </button>
+
+        <div style={{display:"flex",justifyContent:"flex-end",marginTop:"0.25rem"}}>
+          <button className="adm-btn adm-btn-primary" onClick={handleSave} disabled={saving}>
+            {saving?<><i className="bx bx-loader-alt bx-spin"/> Salvando...</>:<><i className="bx bx-save"/> Salvar menu</>}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Categories Section ───────────────────────────────────────────────────────
 function CategoriesSection({ articles, categories, setCategories, notyf }: {
   articles: Article[]; categories: Category[];
@@ -762,7 +904,7 @@ function CategoriesSection({ articles, categories, setCategories, notyf }: {
 // ═════════════════════════════════════════════════════════════════════════════
 //  ADMIN PANEL
 // ═════════════════════════════════════════════════════════════════════════════
-type AdminView = "list"|"create"|"edit"|"categories"|"standings"|"convocation"|"fixtures"|"nations"|"scorers"|"config";
+type AdminView = "list"|"create"|"edit"|"categories"|"standings"|"convocation"|"fixtures"|"nations"|"scorers"|"config"|"menu";
 
 function AdminPanel({ user, onLogout, onExit }: { user:AdminUser; onLogout:()=>void; onExit:()=>void }) {
   const [articles,   setArticles]   = useState<Article[]>([]);
@@ -829,6 +971,7 @@ function AdminPanel({ user, onLogout, onExit }: { user:AdminUser; onLogout:()=>v
   const navItems: {key:AdminView; icon:string; label:string}[] = [
     {key:"list",        icon:"bx-news",           label:"Artigos"},
     {key:"categories",  icon:"bx-purchase-tag",   label:"Categorias"},
+    {key:"menu",        icon:"bx-menu",            label:"Menu do Site"},
     {key:"standings",   icon:"bxs-trophy",         label:"Classificação"},
     {key:"convocation", icon:"bxs-group",          label:"Convocação"},
     {key:"fixtures",    icon:"bx-calendar-event", label:"Próximos Jogos"},
@@ -900,6 +1043,7 @@ function AdminPanel({ user, onLogout, onExit }: { user:AdminUser; onLogout:()=>v
           : view==="nations"    ? <NationsSection notyf={notyf}/>
           : view==="scorers"    ? <ScorersSection notyf={notyf}/>
           : view==="config"     ? <ConfigSection notyf={notyf}/>
+          : view==="menu"       ? <MenuSection notyf={notyf}/>
           : view==="categories" ? <CategoriesSection articles={articles} categories={categories} setCategories={setCategories} notyf={notyf}/>
           : (view==="create"||view==="edit")?(
             <ArticleForm
