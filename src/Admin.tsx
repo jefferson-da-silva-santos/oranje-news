@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useNotyf } from "./useNotyf";
-import { useLocalStorage } from "./useLocalStorage";
-import ColorPicker from "./ColorPicker";
+import { useLocalStorage } from "./hooks/useLocalStorage";
+import ColorPicker from "./components/ColorPicker";
 import {
   authApi, articlesApi, categoriesApi, standingsApi, convocationApi,
   fixturesApi, nationsApi, scorersApi, configApi, menuApi, normalizeArticle, auth,
