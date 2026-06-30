@@ -80,6 +80,25 @@ export interface SiteConfig {
   footer_copy?: string; eredivisie_intro?: string;
 }
 
+// ─── Menu ─────────────────────────────────────────────────────────────────────
+export interface MenuItem {
+  id: number;
+  label: string;
+  icon: string;
+  path: string;
+  order: number;
+  active: boolean;
+  parentId?: number | null;
+  children: MenuItem[];
+}
+export interface MenuItemInput {
+  label: string;
+  icon: string;
+  path: string;
+  active?: boolean;
+  children?: MenuItemInput[];
+}
+
 // ─── Auth API ─────────────────────────────────────────────────────────────────
 export const authApi = {
   async login(email: string, password: string) {
@@ -175,6 +194,15 @@ export const configApi = {
   get()                  { return request<SiteConfig>("/config"); },
   update(data: Partial<SiteConfig>) {
     return request<SiteConfig>("/config", { method: "PATCH", body: JSON.stringify(data) });
+  },
+};
+
+// ─── Menu API ─────────────────────────────────────────────────────────────────
+export const menuApi = {
+  get()    { return request<MenuItem[]>("/menu"); },
+  getAll() { return request<MenuItem[]>("/menu/all"); },
+  update(items: MenuItemInput[]) {
+    return request<MenuItem[]>("/menu", { method: "PUT", body: JSON.stringify({ items }) });
   },
 };
 
