@@ -36,11 +36,29 @@ export interface Article {
 }
 export interface ArticleInput {
   title: string; meta: string; date: string; image: string;
-  imageSource?: "url" | "drive";
+  imageSource?: "url" | "drive" | "upload";
   icon?: string; club?: string; tags?: string[];
   body?: string[]; bodyHtml?: string;
   published?: boolean; featured?: boolean; categoryId: number;
 }
+
+// ─── Upload API ───────────────────────────────────────────────────────────────
+export const uploadApi = {
+  async image(file: File): Promise<{ url: string; publicId: string }> {
+    const token = auth.getToken();
+    const formData = new FormData();
+    formData.append("image", file);
+    const res = await fetch(`${BASE}/upload/image`, {
+      method: "POST",
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      body: formData,
+    });
+    const json = await res.json();
+    if (res.status === 401) { auth.clear(); throw new AuthError(json.error ?? "Sessão expirada."); }
+    if (!res.ok || !json.success) throw new Error(json.error ?? "Erro no upload");
+    return json.data;
+  },
+};
 export interface PaginatedArticles {
   articles: Article[];
   pagination: { total: number; page: number; limit: number; pages: number };
