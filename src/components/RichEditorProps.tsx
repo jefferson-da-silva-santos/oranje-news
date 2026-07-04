@@ -14,12 +14,12 @@ import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
 import Underline from "@tiptap/extension-underline";
 import TextAlign from "@tiptap/extension-text-align";
-import { TextStyle } from "@tiptap/extension-text-style";
+import TextStyle from "@tiptap/extension-text-style";
 import Placeholder from "@tiptap/extension-placeholder";
 import Image from "@tiptap/extension-image";
 import Youtube from "@tiptap/extension-youtube";
 import { useEffect, useCallback, useRef, useState } from "react";
-import { uploadApi } from "../api";
+import { uploadApi } from "./api";
 
 // ─── Extensão customizada: Twitter/X Embed ────────────────────────────────────
 // Armazena o HTML do embed como nó block; renderiza no editor e no site
@@ -204,7 +204,7 @@ export default function RichEditor({
         allowBase64: false,
       }),
       Youtube.configure({
-        width: 560,
+        width: "100%",
         height: 340,
         HTMLAttributes: { class: "re-youtube" },
         nocookie: true,
@@ -249,12 +249,10 @@ export default function RichEditor({
     }
   }, [editor]);
 
-  // Inserir YouTube
+  // Inserir YouTube — passa a URL original, o TipTap faz o parse internamente
   function insertYoutube(url: string) {
     if (!editor) return;
-    const id = extractYouTubeId(url);
-    if (!id) return;
-    editor.chain().focus().setYoutubeVideo({ src: `https://www.youtube.com/embed/${id}` }).run();
+    editor.chain().focus().setYoutubeVideo({ src: url }).run();
     setModal(null);
   }
 
