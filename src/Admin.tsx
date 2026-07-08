@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { showNotyf } from "./utils/notifier";
+import { showNotyf } from "./notifier";
 import { useLocalStorage } from "./hooks/useLocalStorage";
 import ColorPicker from "./components/ColorPicker";
 import RichEditor from "./components/RichEditorProps";
