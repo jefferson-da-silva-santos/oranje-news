@@ -31,20 +31,16 @@ jobs:
         env:
           VITE_API_URL: ${{ secrets.VITE_API_URL }}
 
-      - name: Deploy via FTPS para Hostinger
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        with:
-          server: ${{ secrets.FTP_HOST }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: ./dist/
-          server-dir: /public_html/
-          port: 21
-          protocol: ftps        # ← só isso que mudou
-          dangerous-clean-slate: false
-          exclude: |
-            **/.git*
-            **/.git*/**
-            **/node_modules/**
-            .env
-            .env.*
+      - name: Deploy via lftp para Hostinger
+        run: |
+          sudo apt-get install -y lftp
+          lftp -c "
+            set ssl:verify-certificate no
+            set ftp:ssl-allow yes
+            set ftp:passive-mode yes
+            set net:timeout 30
+            set net:max-retries 3
+            open ftp://${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}@${{ secrets.FTP_HOST }}
+            mirror -R --delete --parallel=5 ./dist/ /public_html/
+            bye
+          "
