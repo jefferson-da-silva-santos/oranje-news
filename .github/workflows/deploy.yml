@@ -31,16 +31,14 @@ jobs:
         env:
           VITE_API_URL: ${{ secrets.VITE_API_URL }}
 
-      - name: Deploy via lftp para Hostinger
+      - name: Deploy via SSH + rsync para Hostinger
         run: |
-          sudo apt-get install -y lftp
-          lftp -c "
-            set ssl:verify-certificate no
-            set ftp:ssl-allow yes
-            set ftp:passive-mode yes
-            set net:timeout 30
-            set net:max-retries 3
-            open ftp://${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}@${{ secrets.FTP_HOST }}
-            mirror -R --delete --parallel=5 ./dist/ /public_html/
-            bye
-          "
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -p 65002 ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts 2>/dev/null
+          rsync -avz --delete \
+            -e "ssh -i ~/.ssh/deploy_key -p 65002 -o StrictHostKeyChecking=no" \
+            ./dist/ \
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:~/public_html/
+          rm -f ~/.ssh/deploy_key
