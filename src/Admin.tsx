@@ -6,7 +6,7 @@ import ColorPicker from "./components/ColorPicker";
 import RichEditor from "./components/RichEditorProps";
 import {
   authApi, articlesApi, categoriesApi, standingsApi, convocationApi,
-  fixturesApi, nationsApi, scorersApi, configApi, menuApi, normalizeArticle, auth,
+  fixturesApi, nationsApi, scorersApi, configApi, menuApi, uploadApi, normalizeArticle, auth,
   type Article, type Category, type ArticleInput, type AdminUser,
   type StandingEntry, type Fixture,
   type NationsEntry, type SiteConfig, type MenuItem, type MenuItemInput,
@@ -158,6 +158,7 @@ function ArticleForm({ initial, categories, onSave, onCancel, saving }: {
   const [tagInput, setTagInput] = useState(initial?.tags.join(", ") ?? "");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [editorExpanded, setEditorExpanded] = useState(false);
+  const [uploadingCover, setUploadingCover] = useState(false);
 
   function set<K extends keyof ArticleInput>(k: K, v: ArticleInput[K]) {
     setForm(f => ({ ...f, [k]: v }));
@@ -185,20 +186,35 @@ function ArticleForm({ initial, categories, onSave, onCancel, saving }: {
     });
   }
 
-  // Preview de imagem — usa URL direta ou monta URL do Drive para preview
+  // Preview de imagem
   function previewUrl(img: string, src: ArticleInput["imageSource"]): string {
     if (!img) return "";
     if (src !== "drive") return img;
+    if (img.includes("lh3.googleusercontent.com/d/")) return img;
     const patterns = [
       /drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/,
       /drive\.google\.com\/open\?id=([a-zA-Z0-9_-]+)/,
-      /id=([a-zA-Z0-9_-]+)/,
+      /lh3\.googleusercontent\.com\/d\/([a-zA-Z0-9_-]+)/,
+      /[?&]id=([a-zA-Z0-9_-]+)/,
     ];
     for (const re of patterns) {
       const m = img.match(re);
-      if (m?.[1]) return `https://drive.google.com/uc?export=view&id=${m[1]}`;
+      if (m?.[1]) return `https://lh3.googleusercontent.com/d/${m[1]}`;
     }
     return img;
+  }
+
+  async function handleCoverUpload(file: File) {
+    setUploadingCover(true);
+    try {
+      const { url } = await uploadApi.image(file);
+      set("image", url);
+      set("imageSource", "upload");
+    } catch (err: any) {
+      showNotyf("error", "Erro no upload: " + err.message);
+    } finally {
+      setUploadingCover(false);
+    }
   }
 
   const imgPreview = previewUrl(form.image, form.imageSource);
@@ -257,31 +273,57 @@ function ArticleForm({ initial, categories, onSave, onCancel, saving }: {
 
             {/* Seletor de origem */}
             <div className="img-source-tabs">
-              <button
-                type="button"
-                className={`img-source-tab ${form.imageSource !== "drive" ? "img-source-active" : ""}`}
-                onClick={() => set("imageSource", "url")}
-              >
+              <button type="button"
+                className={`img-source-tab ${form.imageSource === "url" || form.imageSource === undefined ? "img-source-active" : ""}`}
+                onClick={() => set("imageSource", "url")}>
                 <i className="bx bx-link" /> URL direta
               </button>
-              <button
-                type="button"
+              <button type="button"
                 className={`img-source-tab ${form.imageSource === "drive" ? "img-source-active" : ""}`}
-                onClick={() => set("imageSource", "drive")}
-              >
+                onClick={() => set("imageSource", "drive")}>
                 <i className="bx bxl-google" /> Google Drive
+              </button>
+              <button type="button"
+                className={`img-source-tab ${form.imageSource === "upload" ? "img-source-active" : ""}`}
+                onClick={() => set("imageSource", "upload")}>
+                <i className="bx bx-cloud-upload" /> Upload
               </button>
             </div>
 
-            <input
-              value={form.image}
-              onChange={e => set("image", e.target.value)}
-              placeholder={
-                form.imageSource === "drive"
-                  ? "Cole o link de compartilhamento do Drive..."
-                  : "https://exemplo.com/imagem.jpg"
-              }
-            />
+            {form.imageSource === "upload" ? (
+              <label className="img-upload-area">
+                <input type="file" accept="image/*" style={{ display: "none" }}
+                  onChange={e => { const f = e.target.files?.[0]; if (f) handleCoverUpload(f); e.target.value = ""; }}
+                  disabled={uploadingCover}
+                />
+                {uploadingCover ? (
+                  <div className="img-upload-loading">
+                    <i className="bx bx-loader-alt bx-spin" /> Enviando para Cloudinary...
+                  </div>
+                ) : form.image ? (
+                  <div className="img-upload-done">
+                    <i className="bx bx-check-circle" style={{ color: "var(--green)" }} />
+                    <span>Imagem enviada! Clique para trocar.</span>
+                  </div>
+                ) : (
+                  <div className="img-upload-placeholder">
+                    <i className="bx bx-image-add" />
+                    <span>Clique para selecionar uma imagem</span>
+                    <small>JPG, PNG, WEBP — máx. 10MB</small>
+                  </div>
+                )}
+              </label>
+            ) : (
+              <input
+                value={form.image}
+                onChange={e => set("image", e.target.value)}
+                placeholder={
+                  form.imageSource === "drive"
+                    ? "Cole o link de compartilhamento do Drive..."
+                    : "https://exemplo.com/imagem.jpg"
+                }
+              />
+            )}
             {errors.image && <span className="field-err">{errors.image}</span>}
 
             {form.imageSource === "drive" && form.image && (
@@ -290,13 +332,19 @@ function ArticleForm({ initial, categories, onSave, onCancel, saving }: {
               </p>
             )}
 
-            {imgPreview && (
+            {imgPreview && form.imageSource !== "upload" && (
               <div className="img-preview">
                 <img
                   src={imgPreview}
                   alt="preview"
                   onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
                 />
+              </div>
+            )}
+            {form.imageSource === "upload" && form.image && (
+              <div className="img-preview">
+                <img src={form.image} alt="preview"
+                  onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
               </div>
             )}
           </div>
