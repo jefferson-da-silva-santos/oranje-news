@@ -2388,5 +2388,6 @@ ul, ol  { list-style: none; }
 }
 
 .bx {
-  width: max-content;
+  width: max-content !important;
+  height: max-content !important;
 }
