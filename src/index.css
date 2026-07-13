@@ -2106,6 +2106,116 @@ ul, ol  { list-style: none; }
 .color-picker-hex-input:focus { border-color: var(--orange); }
 
 /* ═══════════════════════════════════════════════════════════════════════════
+   EMBED MODAL (YouTube / Twitter / Instagram) — inserido pela toolbar do editor
+   ═══════════════════════════════════════════════════════════════════════════ */
+.embed-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+  padding: 1rem;
+  animation: fadeIn 0.15s ease;
+}
+.embed-modal {
+  background: var(--surface);
+  border-radius: var(--r-xl);
+  width: 100%;
+  max-width: 420px;
+  box-shadow: var(--shadow-xl);
+  overflow: hidden;
+  animation: fadeUp 0.2s ease;
+}
+.embed-modal-head {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 1.1rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--txt1);
+}
+.embed-modal-close {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--r-sm);
+  color: var(--txt3);
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+  flex-shrink: 0;
+}
+.embed-modal-close:hover { background: var(--bg2); color: var(--txt1); }
+
+.embed-modal-body {
+  padding: 1.1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+.embed-modal-label {
+  font-size: 0.73rem;
+  font-weight: 700;
+  color: var(--txt2);
+  letter-spacing: 0.03em;
+}
+.embed-modal-input {
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 0.65rem 0.8rem;
+  font-size: 0.85rem;
+  font-family: var(--font);
+  color: var(--txt1);
+  background: var(--surface);
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  width: 100%;
+}
+.embed-modal-input:focus {
+  border-color: var(--orange);
+  box-shadow: 0 0 0 3px rgba(255,98,0,0.08);
+}
+.embed-modal-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4rem;
+  background: rgba(220,38,38,0.08);
+  border: 1px solid rgba(220,38,38,0.25);
+  border-radius: var(--r-md);
+  padding: 0.55rem 0.75rem;
+  font-size: 0.76rem;
+  color: var(--red);
+  line-height: 1.5;
+}
+.embed-modal-error i { font-size: 1rem; flex-shrink: 0; margin-top: 1px; }
+.embed-modal-hint {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 0.6rem 0.8rem;
+  font-size: 0.76rem;
+  color: var(--txt2);
+  line-height: 1.55;
+}
+.embed-modal-hint strong { color: var(--txt1); }
+.embed-modal-foot {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  padding: 1rem 1.25rem;
+  border-top: 1px solid var(--border);
+  background: var(--surface2);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
    RICH EDITOR (TipTap)
    ═══════════════════════════════════════════════════════════════════════════ */
 
