@@ -1301,5 +1301,8 @@ export default function Admin() {
 
   if (checking) return <div className="login-root"><div className="adm-loading"><i className="bx bx-loader-alt bx-spin adm-loading-icon" /><p>Verificando sessão...</p></div></div>;
   if (!user) return <LoginScreen onLogin={u => setUser(u)} />;
-  return <AdminPanel user={user} onLogout={() => { authApi.logout(); setUser(null); }} onExit={() => navigate("/")} />;
+  return <AdminPanel user={user} onLogout={() => { authApi.logout(); setUser(null); }} onExit={() => {
+    navigate("/")
+    window.location.reload();
+  }} />;
 }
