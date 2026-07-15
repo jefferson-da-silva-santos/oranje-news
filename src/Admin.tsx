@@ -200,11 +200,25 @@ function ArticleForm({ initial, categories, onSave, onCancel, saving }: {
 
   async function handleSave() {
     const e = validate();
-    if (Object.keys(e).length > 0) { setErrors(e); return; }
-    await onSave({
-      ...form,
-      tags: tagInput.split(",").map(t => t.trim()).filter(Boolean),
-    });
+    if (Object.keys(e).length > 0) {
+      setErrors(e);
+      // Antes, a falha de validação era só um texto pequeno embaixo do campo —
+      // fácil de não notar. Agora avisa também via toast, deixando claro
+      // por que o clique em "Publicar" não disparou nada.
+      const firstMsg = Object.values(e)[0];
+      showNotyf("error", firstMsg || "Preencha os campos obrigatórios.");
+      return;
+    }
+    try {
+      await onSave({
+        ...form,
+        tags: tagInput.split(",").map(t => t.trim()).filter(Boolean),
+      });
+    } catch (err: any) {
+      // Salvaguarda: se onSave lançar algo não tratado, não fica mais em silêncio.
+      console.error("Erro ao salvar artigo:", err);
+      showNotyf("error", err?.message || "Erro inesperado ao salvar o artigo.");
+    }
   }
 
   // Preview de imagem
