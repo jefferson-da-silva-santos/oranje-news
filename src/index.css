@@ -2701,15 +2701,40 @@ ul, ol  { list-style: none; }
 .cat-checklist-wrap { border: 1px solid var(--border, #e2e2e2); border-radius: 10px; overflow: hidden; }
 .cat-checklist-search { display: flex; align-items: center; gap: .5rem; padding: .5rem .75rem; border-bottom: 1px solid var(--border, #e2e2e2); background: #fafafa; }
 .cat-checklist-search i { font-size: 1rem; color: var(--txt3, #888); flex-shrink: 0; }
-.cat-checklist-search input { border: none; outline: none; flex: 1; background: transparent; font-size: .9rem; }
-.cat-checklist-count { font-size: .75rem; color: #888; white-space: nowrap; }
+.cat-checklist-search input { border: none; outline: none; flex: 1; background: transparent; font-size: .9rem; min-width: 0; }
+.cat-checklist-count { font-size: .75rem; color: #888; white-space: nowrap; flex-shrink: 0; }
 .cat-checklist-list { max-height: 220px; overflow-y: auto; padding: .25rem; }
-.cat-check-row { display: flex; align-items: center; gap: .5rem; padding: .4rem .5rem; border-radius: 6px; cursor: pointer; }
+.cat-check-row {
+  display: flex; align-items: center; gap: .55rem;
+  padding: .5rem .6rem; border-radius: 6px; cursor: pointer;
+  min-height: 38px;
+}
 .cat-check-row:hover { background: #f4f4f5; }
-.cat-check-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
-.cat-check-name { font-size: .9rem; }
+.cat-check-row input[type="checkbox"] {
+  appearance: none; -webkit-appearance: none;
+  width: 17px; height: 17px; flex-shrink: 0;
+  border: 1.5px solid #c9c9cc; border-radius: 4px;
+  cursor: pointer; position: relative; margin: 0;
+  transition: background .15s, border-color .15s;
+}
+.cat-check-row input[type="checkbox"]:checked {
+  background: #FF6200; border-color: #FF6200;
+}
+.cat-check-row input[type="checkbox"]:checked::after {
+  content: ""; position: absolute; left: 5px; top: 1px;
+  width: 4px; height: 9px;
+  border: solid #fff; border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+.cat-check-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+.cat-check-name {
+  font-size: .88rem; white-space: nowrap; overflow: hidden;
+  text-overflow: ellipsis; min-width: 0;
+}
 .cat-checklist-empty { padding: .75rem; text-align: center; color: #999; font-size: .85rem; }
 .cat-checklist-empty i { font-size: 1rem; flex-shrink: 0; }
+.cat-checklist-list::-webkit-scrollbar { width: 6px; }
+.cat-checklist-list::-webkit-scrollbar-thumb { background: #d4d4d8; border-radius: 3px; }
 
 /* ── Link público de categoria (tela "Categorias" do admin) ─────────────────── */
 .cat-row-link { display: inline-flex; align-items: center; gap: .3rem; background: none; border: none; color: #2563eb; font-size: .8rem; cursor: pointer; padding: 0 .25rem; }
