@@ -346,7 +346,8 @@ function HomePage() {
 
   const published = articles.filter(a => a.published);
   const highlights = published.slice(0, 3);
-  const moreNews = published.slice(3, 6);
+  // Antes: só 3 (slice(3,6)). Agora: as últimas 20 depois dos 3 destaques.
+  const moreNews = published.slice(3, 23);
   const openArticle = (slug: string) => navigate(`/noticia/${slug}`);
 
   return (
@@ -528,7 +529,6 @@ function ArticleBody({
         const url = el.getAttribute("data-tweet-url");
         if (!url || el.querySelector("blockquote.twitter-tweet")) return;
 
-        // Monta o blockquote que o widget do Twitter vai processar
         const bq = document.createElement("blockquote");
         bq.className = "twitter-tweet";
         bq.setAttribute("data-lang", "pt");
@@ -544,7 +544,6 @@ function ArticleBody({
         el.appendChild(bq);
       });
 
-      // Carrega o script do widget ou chama render se já carregado
       const win = window as any;
       if (win.twttr?.widgets?.load) {
         win.twttr.widgets.load(container);

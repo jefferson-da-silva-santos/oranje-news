@@ -2761,3 +2761,28 @@ ul, ol  { list-style: none; }
 .art-tag { text-decoration: none; display: inline-flex; align-items: center; }
 .art-tag i { font-size: .85rem; flex-shrink: 0; }
 .art-tag:hover { text-decoration: underline; }
+
+/* ── FIX: Boxicons com largura estourada em algumas máquinas ─────────────────
+   Causa: quando a fonte @font-face do Boxicons não é aplicada (ex: falha de
+   carregamento, race condition entre CSS e fonte, ou fallback do sistema),
+   o navegador renderiza o glyph com a fonte padrão do SO — que tem métricas
+   de largura bem diferentes pra esses codepoints, daí o ícone "esticado".
+   Isso varia de PC pra PC porque cada SO tem uma fonte de fallback diferente.
+   Fix: travar font-family, tamanho e caixa de exibição SÓ nos ícones do
+   Boxicons (classe .bx / .bxs), sem afetar mais nada do site. ────────────── */
+i.bx, i[class^="bx-"], i[class*=" bx-"],
+i.bxs, i[class^="bxs-"], i[class*=" bxs-"] {
+  font-family: 'boxicons' !important;
+  font-weight: 400 !important;
+  font-style: normal !important;
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  line-height: 1;
+  text-align: center;
+  vertical-align: middle;
+  flex-shrink: 0;
+  overflow: hidden;
+  speak: none;
+  -webkit-font-smoothing: antialiased;
+}
